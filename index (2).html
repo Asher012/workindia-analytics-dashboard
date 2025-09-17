@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WorkIndia Support Team Analytics Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="dashboard-layout">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="header-branding">
+        <div class="workindia-logo">
+          <div class="logo-icon">WI</div>
+          <div class="logo-text">
+            <h1>WorkIndia Support Team Analytics Dashboard</h1>
+            <p class="header-subtitle">Real-time analytics for support excellence</p>
+          </div>
+        </div>
+      </div>
+      <div class="header-info">
+        <div class="current-date" id="current-date"></div>
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          Live Data
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <h3>Upload Data</h3>
+      <form id="upload-form">
+        <label for="excel-upload" class="upload-area">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">
+            <strong>Drag & drop Excel file here</strong>
+            <span>or click to browse</span>
+            <small>Supports .xlsx and .csv files</small>
+          </div>
+          <input type="file" id="excel-upload" accept=".csv,.xlsx" />
+        </label>
+        <progress id="upload-progress" max="100" value="0" class="hidden"></progress>
+        <div id="upload-error" class="status status--error hidden"></div>
+      </form>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Filters</h3>
+      <div class="filter-group">
+        <label class="form-label" for="filter-date-start">Date Range</label>
+        <input type="date" id="filter-date-start" class="form-control" />
+        <input type="date" id="filter-date-end" class="form-control" />
+      </div>
+      
+      <div class="filter-group">
+        <label class="form-label" for="filter-agent">Agent</label>
+        <select id="filter-agent" class="form-control" multiple>
+          <option value="">All Agents</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label class="form-label" for="filter-status">Call Status</label>
+        <select id="filter-status" class="form-control">
+          <option value="">All Status</option>
+          <option value="PB">Product Briefing</option>
+          <option value="CC">Customer Support</option>
+          <option value="SI">System Issues</option>
+        </select>
+      </div>
+      
+      <div class="filter-buttons">
+        <button type="button" class="btn btn--outline btn--sm" id="reset-filters">Reset Filters</button>
+        <button type="button" class="btn btn--primary btn--sm" id="apply-filters">Apply Filters</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Export & Share</h3>
+      <button class="btn btn--primary btn--sm" id="export-dashboard">Export Dashboard</button>
+      <button class="btn btn--outline btn--sm" id="download-report">Download Report</button>
+      <button class="btn btn--outline btn--sm" id="print-dashboard">Print Dashboard</button>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Free Usage Guide</h3>
+      <button class="btn btn--outline btn--sm" id="toggle-guide">Show Usage Guide</button>
+      <div id="usage-guide" class="usage-guide hidden">
+        <h4>Free Hosting Options:</h4>
+        <ul>
+          <li><strong>GitHub Pages:</strong> Free static hosting</li>
+          <li><strong>Netlify:</strong> Free tier with 100GB</li>
+          <li><strong>Vercel:</strong> Free for personal projects</li>
+        </ul>
+        <h4>Quick Setup:</h4>
+        <ol>
+          <li>Download all dashboard files</li>
+          <li>Create GitHub repository</li>
+          <li>Upload files to repository</li>
+          <li>Enable GitHub Pages</li>
+          <li>Share URL with team</li>
+        </ol>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- KPI Cards -->
+    <section class="kpi-section">
+      <div class="kpi-card kpi-card--primary">
+        <div class="kpi-card__icon">📞</div>
+        <div class="kpi-card__info">
+          <div class="kpi-card__label">Total Calls</div>
+          <div class="kpi-card__value" id="kpi-total-calls">97</div>
+          <div class="kpi-card__change">+12.5% from last period</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-card__icon">📈</div>
+        <div class="kpi-card__info">
+          <div class="kpi-card__label">Success Rate</div>
+          <div class="kpi-card__value" id="kpi-success-rate">36.1%</div>
+          <div class="kpi-card__change">+5.2% improvement</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--info">
+        <div class="kpi-card__icon">⏱️</div>
+        <div class="kpi-card__info">
+          <div class="kpi-card__label">Avg Duration</div>
+          <div class="kpi-card__value" id="kpi-avg-duration">4.67 min</div>
+          <div class="kpi-card__change">Optimal range</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--warning">
+        <div class="kpi-card__icon">🕙</div>
+        <div class="kpi-card__info">
+          <div class="kpi-card__label">Peak Hour</div>
+          <div class="kpi-card__value" id="kpi-peak-hour">10:00 AM</div>
+          <div class="kpi-card__change">59 calls handled</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--primary">
+        <div class="kpi-card__icon">⭐</div>
+        <div class="kpi-card__info">
+          <div class="kpi-card__label">Top Agent</div>
+          <div class="kpi-card__value" id="kpi-top-agent">Gimitha P</div>
+          <div class="kpi-card__change">72.7% success rate</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--info">
+        <div class="kpi-card__icon">👥</div>
+        <div class="kpi-card__info">
+          <div class="kpi-card__label">Active Agents</div>
+          <div class="kpi-card__value" id="kpi-active-agents">13</div>
+          <div class="kpi-card__change">All available</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Agent Performance</h3>
+          <p>Success rate by agent (last 30 days)</p>
+        </div>
+        <canvas id="agent-performance-chart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Hourly Call Volume</h3>
+          <p>Call distribution throughout the day</p>
+        </div>
+        <canvas id="hourly-volume-chart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Call Categories</h3>
+          <p>Distribution by call type</p>
+        </div>
+        <canvas id="call-categories-chart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Call Outcomes</h3>
+          <p>Success vs failure analysis</p>
+        </div>
+        <canvas id="call-outcomes-chart"></canvas>
+      </div>
+    </section>
+
+    <!-- Data Table -->
+    <section class="table-section">
+      <div class="table-header">
+        <h3>Agent Performance Details</h3>
+        <div class="table-controls">
+          <input type="text" id="table-search" placeholder="Search agents..." class="form-control">
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table id="performance-table" class="data-table">
+          <thead>
+            <tr>
+              <th data-sort="name">Agent Name</th>
+              <th data-sort="calls">Total Calls</th>
+              <th data-sort="duration">Avg Duration</th>
+              <th data-sort="success">Success Rate</th>
+              <th data-sort="score">Performance Score</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <!-- Data will be populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="dashboard-footer">
+    <div class="footer-content">
+      <div class="footer-branding">
+        <span>Built by <strong>Ayush Pandey</strong> ORM | <a href="https://workindia.in" target="_blank">WorkIndia</a></span>
+      </div>
+      <div class="footer-info">
+        <span>Last updated: <span id="last-updated"></span></span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
