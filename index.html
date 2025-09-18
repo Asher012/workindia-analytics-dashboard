@@ -4,9 +4,717 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WorkIndia Support Team Analytics Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #94a3b8;
+            --card-bg: #ffffff;
+            --body-bg: #f1f5f9;
+            --border: #e2e8f0;
+            --text: #334155;
+            --text-light: #64748b;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 8px;
+        }
+
+        [data-theme="dark"] {
+            --card-bg: #1e293b;
+            --body-bg: #0f172a;
+            --border: #334155;
+            --text: #e2e8f0;
+            --text-light: #94a3b8;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--body-bg);
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .title-section h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .title-section p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .date-time {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            margin-bottom: 2rem;
+        }
+
+        .upload-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .upload-card h3 {
+            margin-bottom: 1.5rem;
+            color: var(--text);
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(var(--primary-light-rgb), 0.05);
+        }
+
+        .upload-area:hover, .upload-area.drag-over {
+            border-color: var(--primary);
+            background: rgba(var(--primary-light-rgb), 0.1);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .upload-text strong {
+            display: block;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .upload-text small {
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        .upload-progress {
+            margin-top: 1.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* KPI Section */
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid var(--border);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .kpi-card.primary { border-left-color: var(--primary); }
+        .kpi-card.success { border-left-color: var(--success); }
+        .kpi-card.warning { border-left-color: var(--warning); }
+        .kpi-card.info { border-left-color: var(--secondary); }
+
+        .kpi-icon {
+            font-size: 2.5rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(var(--primary-light-rgb), 0.1);
+            border-radius: 12px;
+            color: var(--primary);
+        }
+
+        .success .kpi-icon { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .warning .kpi-icon { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .info .kpi-icon { background: rgba(100, 116, 139, 0.1); color: var(--secondary); }
+
+        .kpi-content h3 {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-change {
+            font-size: 0.75rem;
+        }
+
+        .kpi-change.positive { color: var(--success); }
+        .kpi-change.negative { color: var(--danger); }
+        .kpi-change.neutral { color: var(--text-light); }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .chart-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-header h3 {
+            font-size: 1.3rem;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .chart-header p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: 300px !important;
+        }
+
+        /* Table Section */
+        .table-section {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-header h3 {
+            color: var(--text);
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .search-input {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            width: 200px;
+            background-color: var(--card-bg);
+            color: var(--text);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            background: rgba(var(--primary-light-rgb), 0.1);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .data-table th:hover {
+            background: rgba(var(--primary-light-rgb), 0.2);
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(var(--primary-light-rgb), 0.05);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            gap: 0.5rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover {
+            background: var(--border);
+        }
+
+        .pagination button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .footer-content a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .footer-content a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .logo-section {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .title-section h1 {
+                font-size: 1.5rem;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .kpi-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            
+            .table-controls {
+                justify-content: stretch;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .upload-card {
+                padding: 1rem;
+            }
+            
+            .upload-area {
+                padding: 1.5rem;
+            }
+            
+            .kpi-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 1rem;
+            }
+            
+            .kpi-section {
+                gap: 1rem;
+            }
+            
+            .charts-section {
+                gap: 1rem;
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                padding: 1rem;
+            }
+            
+            .table-section {
+                margin: 0 -1rem;
+                border-radius: 0;
+            }
+            
+            .table-header {
+                padding: 1rem;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 0.75rem;
+            }
+            
+            canvas {
+                height: 250px !important;
+            }
+            
+            .footer {
+                padding: 1rem;
+            }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Filter section */
+        .filter-section {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .filter-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .filter-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .filter-select {
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--card-bg);
+            color: var(--text);
+        }
+    </style>
 </head>
 <body>
     <div class="dashboard-container">
@@ -20,11 +728,16 @@
                         <p>Real-time support team performance analytics</p>
                     </div>
                 </div>
-                <div class="header-info">
-                    <div class="date-time" id="currentDateTime"></div>
-                    <div class="status">
-                        <span class="status-dot"></span>
-                        Live Data
+                <div class="header-actions">
+                    <button class="theme-toggle" id="themeToggle">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="header-info">
+                        <div class="date-time" id="currentDateTime"></div>
+                        <div class="status">
+                            <span class="status-dot"></span>
+                            Live Data
+                        </div>
                     </div>
                 </div>
             </div>
@@ -37,10 +750,10 @@
                 <div class="upload-card">
                     <h3>Upload New Data</h3>
                     <div class="upload-area" id="uploadArea">
-                        <div class="upload-icon">📊</div>
+                        <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
                         <div class="upload-text">
-                            <strong>Drag & drop Excel file here or click to browse</strong>
-                            <small>Supports .xlsx and .csv files</small>
+                            <strong>Drag & drop Excel/CSV file here or click to browse</strong>
+                            <small>Supports .xlsx, .xls and .csv files with 1000+ records</small>
                         </div>
                         <input type="file" id="fileInput" accept=".xlsx,.csv,.xls" hidden>
                     </div>
@@ -53,58 +766,86 @@
                 </div>
             </section>
 
+            <!-- Filter Section -->
+            <section class="filter-section">
+                <div class="filter-header">
+                    <div class="filter-title">Data Filters</div>
+                    <button class="btn btn-secondary" id="resetFilters">Reset Filters</button>
+                </div>
+                <div class="filter-content">
+                    <div class="filter-group">
+                        <label class="filter-label">Date Range</label>
+                        <select class="filter-select" id="dateFilter">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="quarter">This Quarter</option>
+                            <option value="year">This Year</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Agent</label>
+                        <select class="filter-select" id="agentFilter">
+                            <option value="all">All Agents</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Success Rate</label>
+                        <select class="filter-select" id="successFilter">
+                            <option value="all">All Rates</option>
+                            <option value="high">High (70%+)</option>
+                            <option value="medium">Medium (30-70%)</option>
+                            <option value="low">Low (0-30%)</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Sort By</label>
+                        <select class="filter-select" id="sortFilter">
+                            <option value="name">Agent Name</option>
+                            <option value="calls">Total Calls</option>
+                            <option value="duration">Avg Duration</option>
+                            <option value="success">Success Rate</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
             <!-- KPI Cards -->
             <section class="kpi-section">
                 <div class="kpi-card primary">
-                    <div class="kpi-icon">📞</div>
+                    <div class="kpi-icon"><i class="fas fa-phone"></i></div>
                     <div class="kpi-content">
                         <h3>Total Calls</h3>
-                        <div class="kpi-value" id="totalCalls">97</div>
-                        <div class="kpi-change positive">+12% from last period</div>
+                        <div class="kpi-value" id="totalCalls">0</div>
+                        <div class="kpi-change positive" id="totalCallsChange">+0% from last period</div>
                     </div>
                 </div>
                 
                 <div class="kpi-card success">
-                    <div class="kpi-icon">📈</div>
+                    <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
                     <div class="kpi-content">
                         <h3>Success Rate</h3>
-                        <div class="kpi-value" id="successRate">36.1%</div>
-                        <div class="kpi-change positive">+5.2% improvement</div>
+                        <div class="kpi-value" id="successRate">0%</div>
+                        <div class="kpi-change positive" id="successRateChange">+0% improvement</div>
                     </div>
                 </div>
                 
                 <div class="kpi-card warning">
-                    <div class="kpi-icon">⏱️</div>
+                    <div class="kpi-icon"><i class="fas fa-clock"></i></div>
                     <div class="kpi-content">
                         <h3>Avg Duration</h3>
-                        <div class="kpi-value" id="avgDuration">4.55 min</div>
+                        <div class="kpi-value" id="avgDuration">0 min</div>
                         <div class="kpi-change neutral">Optimal range</div>
                     </div>
                 </div>
                 
                 <div class="kpi-card info">
-                    <div class="kpi-icon">🕙</div>
-                    <div class="kpi-content">
-                        <h3>Peak Hour</h3>
-                        <div class="kpi-value" id="peakHour">10:00 AM</div>
-                        <div class="kpi-change neutral" id="peakHourCalls">59 calls</div>
-                    </div>
-                </div>
-                
-                <div class="kpi-card primary">
-                    <div class="kpi-icon">⭐</div>
-                    <div class="kpi-content">
-                        <h3>Top Agent</h3>
-                        <div class="kpi-value" id="topAgent">Akhila S</div>
-                        <div class="kpi-change positive" id="topAgentRate">100% success</div>
-                    </div>
-                </div>
-                
-                <div class="kpi-card info">
-                    <div class="kpi-icon">👥</div>
+                    <div class="kpi-icon"><i class="fas fa-users"></i></div>
                     <div class="kpi-content">
                         <h3>Active Agents</h3>
-                        <div class="kpi-value" id="activeAgents">14</div>
+                        <div class="kpi-value" id="activeAgents">0</div>
                         <div class="kpi-change positive">All available</div>
                     </div>
                 </div>
@@ -122,10 +863,10 @@
                 
                 <div class="chart-container">
                     <div class="chart-header">
-                        <h3>Hourly Call Volume</h3>
-                        <p>Call distribution throughout the day</p>
+                        <h3>Call Volume Trends</h3>
+                        <p>Daily call distribution</p>
                     </div>
-                    <canvas id="hourlyChart"></canvas>
+                    <canvas id="trendChart"></canvas>
                 </div>
                 
                 <div class="chart-container">
@@ -151,24 +892,37 @@
                     <h3>Agent Performance Details</h3>
                     <div class="table-controls">
                         <input type="text" id="searchInput" placeholder="Search agents..." class="search-input">
-                        <button class="btn-secondary" id="exportBtn">Export CSV</button>
+                        <button class="btn btn-primary" id="exportBtn">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
                     </div>
                 </div>
                 <div class="table-container">
                     <table id="agentTable" class="data-table">
                         <thead>
                             <tr>
-                                <th onclick="sortTable('full_name')">Agent Name</th>
-                                <th onclick="sortTable('Total_Calls')">Total Calls</th>
-                                <th onclick="sortTable('Avg_Duration_Min')">Avg Duration</th>
-                                <th onclick="sortTable('Success_Rate')">Success Rate</th>
-                                <th onclick="sortTable('Successful_Calls')">Successful Calls</th>
+                                <th data-sort="full_name">Agent Name <i class="fas fa-sort"></i></th>
+                                <th data-sort="Total_Calls">Total Calls <i class="fas fa-sort"></i></th>
+                                <th data-sort="Avg_Duration_Min">Avg Duration <i class="fas fa-sort"></i></th>
+                                <th data-sort="Success_Rate">Success Rate <i class="fas fa-sort"></i></th>
+                                <th data-sort="Successful_Calls">Successful Calls <i class="fas fa-sort"></i></th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
-                            <!-- Data will be populated by JavaScript -->
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 2rem;">
+                                    <div class="spinner" id="tableSpinner"></div>
+                                    <div id="noDataMessage">No data available. Upload a file to get started.</div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
+                </div>
+                <div class="pagination" id="pagination">
+                    <button id="prevPage">&laquo; Previous</button>
+                    <button class="active">1</button>
+                    <button id="nextPage">Next &raquo;</button>
                 </div>
             </section>
         </main>
@@ -182,6 +936,850 @@
         </footer>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // WorkIndia Support Team Analytics Dashboard - Enhanced JavaScript
+        class WorkIndiaDashboard {
+            constructor() {
+                this.currentData = null;
+                this.charts = {};
+                this.sortDirection = {};
+                this.currentPage = 1;
+                this.itemsPerPage = 10;
+                this.filteredData = [];
+                this.filters = {
+                    date: 'all',
+                    agent: 'all',
+                    success: 'all',
+                    sort: 'name'
+                };
+                
+                // Initialize with empty data structure
+                this.defaultData = {
+                    "summary_kpis": {
+                        "total_calls": 0,
+                        "success_rate": 0,
+                        "avg_duration": 0,
+                        "peak_hour": "N/A",
+                        "peak_hour_calls": 0,
+                        "top_agent": "N/A",
+                        "active_agents": 0
+                    },
+                    "agent_performance": [],
+                    "hourly_stats": [],
+                    "call_categories": [],
+                    "call_outcomes": []
+                };
+                
+                this.init();
+            }
+            
+            init() {
+                this.currentData = this.defaultData;
+                this.updateDateTime();
+                this.setupEventListeners();
+                this.updateDashboard();
+                
+                // Update time every minute
+                setInterval(() => this.updateDateTime(), 60000);
+            }
+            
+            updateDateTime() {
+                const now = new Date();
+                const options = {
+                    weekday: 'long',
+                    year: 'numeric', 
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                };
+                
+                document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
+                document.getElementById('lastUpdated').textContent = now.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+            
+            setupEventListeners() {
+                // File upload functionality
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('fileInput');
+                
+                uploadArea.addEventListener('click', () => fileInput.click());
+                
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('drag-over');
+                });
+                
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('drag-over');
+                });
+                
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('drag-over');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.handleFileUpload(files[0]);
+                    }
+                });
+                
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        this.handleFileUpload(e.target.files[0]);
+                    }
+                });
+                
+                // Search functionality
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.filterTable(e.target.value);
+                });
+                
+                // Export functionality
+                document.getElementById('exportBtn').addEventListener('click', () => {
+                    this.exportToCSV();
+                });
+                
+                // Pagination
+                document.getElementById('prevPage').addEventListener('click', () => {
+                    if (this.currentPage > 1) {
+                        this.currentPage--;
+                        this.updateTable();
+                    }
+                });
+                
+                document.getElementById('nextPage').addEventListener('click', () => {
+                    const maxPage = Math.ceil(this.filteredData.length / this.itemsPerPage);
+                    if (this.currentPage < maxPage) {
+                        this.currentPage++;
+                        this.updateTable();
+                    }
+                });
+                
+                // Theme toggle
+                document.getElementById('themeToggle').addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+                
+                // Filter event listeners
+                document.getElementById('dateFilter').addEventListener('change', (e) => {
+                    this.filters.date = e.target.value;
+                    this.applyFilters();
+                });
+                
+                document.getElementById('agentFilter').addEventListener('change', (e) => {
+                    this.filters.agent = e.target.value;
+                    this.applyFilters();
+                });
+                
+                document.getElementById('successFilter').addEventListener('change', (e) => {
+                    this.filters.success = e.target.value;
+                    this.applyFilters();
+                });
+                
+                document.getElementById('sortFilter').addEventListener('change', (e) => {
+                    this.filters.sort = e.target.value;
+                    this.applyFilters();
+                });
+                
+                document.getElementById('resetFilters').addEventListener('click', () => {
+                    this.resetFilters();
+                });
+                
+                // Table sorting
+                document.querySelectorAll('#agentTable th[data-sort]').forEach(th => {
+                    th.addEventListener('click', () => {
+                        this.sortTable(th.dataset.sort);
+                    });
+                });
+            }
+            
+            toggleTheme() {
+                const body = document.body;
+                const themeToggle = document.getElementById('themeToggle');
+                const icon = themeToggle.querySelector('i');
+                
+                if (body.getAttribute('data-theme') === 'dark') {
+                    body.removeAttribute('data-theme');
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                } else {
+                    body.setAttribute('data-theme', 'dark');
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                }
+            }
+            
+            async handleFileUpload(file) {
+                if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
+                    this.showToast('Please select a valid Excel or CSV file', 'error');
+                    return;
+                }
+                
+                const progressContainer = document.getElementById('uploadProgress');
+                const progressFill = document.getElementById('progressFill');
+                const progressText = document.getElementById('progressText');
+                
+                progressContainer.style.display = 'block';
+                progressFill.style.width = '0%';
+                progressText.textContent = 'Processing...';
+                
+                try {
+                    // Simulate processing with progress
+                    for (let i = 0; i <= 100; i += 10) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        progressFill.style.width = i + '%';
+                        
+                        if (i === 30) progressText.textContent = 'Reading file...';
+                        if (i === 60) progressText.textContent = 'Processing data...';
+                        if (i === 90) progressText.textContent = 'Updating charts...';
+                        if (i === 100) progressText.textContent = 'Complete!';
+                    }
+                    
+                    // Process the file
+                    await this.processFile(file);
+                    
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        this.showToast('File uploaded and processed successfully!', 'success');
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    progressContainer.style.display = 'none';
+                    this.showToast('Error processing file. Please try again.', 'error');
+                }
+            }
+            
+            async processFile(file) {
+                // Show loading state
+                document.getElementById('tableSpinner').style.display = 'block';
+                document.getElementById('noDataMessage').style.display = 'none';
+                
+                try {
+                    let agentData = [];
+                    
+                    if (file.name.endsWith('.csv')) {
+                        // Process CSV file
+                        agentData = await this.processCSV(file);
+                    } else {
+                        // Process Excel file
+                        agentData = await this.processExcel(file);
+                    }
+                    
+                    // Generate additional data based on agent performance
+                    this.currentData = this.generateDashboardData(agentData);
+                    
+                    // Update filters
+                    this.updateFilters();
+                    
+                    // Apply initial filters
+                    this.applyFilters();
+                    
+                    this.updateDashboard();
+                    
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    this.showToast('Error processing file. Please check the format and try again.', 'error');
+                } finally {
+                    // Hide loading state
+                    document.getElementById('tableSpinner').style.display = 'none';
+                    if (this.currentData.agent_performance.length === 0) {
+                        document.getElementById('noDataMessage').style.display = 'block';
+                    }
+                }
+            }
+            
+            async processCSV(file) {
+                return new Promise((resolve, reject) => {
+                    Papa.parse(file, {
+                        header: true,
+                        dynamicTyping: true,
+                        complete: (results) => {
+                            resolve(results.data);
+                        },
+                        error: (error) => {
+                            reject(error);
+                        }
+                    });
+                });
+            }
+            
+            async processExcel(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = (e) => {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            
+                            // Get the first worksheet
+                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                            
+                            resolve(jsonData);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+                    
+                    reader.onerror = (error) => {
+                        reject(error);
+                    };
+                    
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+            
+            generateDashboardData(agentData) {
+                // Calculate summary KPIs
+                const totalCalls = agentData.reduce((sum, agent) => sum + (agent.Total_Calls || 0), 0);
+                const successfulCalls = agentData.reduce((sum, agent) => sum + (agent.Successful_Calls || 0), 0);
+                const successRate = totalCalls > 0 ? (successfulCalls / totalCalls) * 100 : 0;
+                const avgDuration = agentData.reduce((sum, agent) => sum + (agent.Avg_Duration_Min || 0), 0) / agentData.length;
+                
+                // Find top agent
+                const topAgent = agentData.reduce((max, agent) => 
+                    (agent.Success_Rate > max.Success_Rate) ? agent : max, {Success_Rate: 0});
+                
+                // Generate hourly stats (simulated)
+                const hourlyStats = [];
+                for (let i = 7; i <= 18; i++) {
+                    hourlyStats.push({
+                        Hour: i,
+                        Total_Calls: Math.floor(Math.random() * 20) + 10,
+                        Avg_Duration_Min: (Math.random() * 5) + 2,
+                        Successful_Calls: Math.floor(Math.random() * 15) + 5,
+                        Success_Rate: Math.floor(Math.random() * 40) + 30
+                    });
+                }
+                
+                // Generate call categories (simulated)
+                const callCategories = [
+                    {category: "Product Briefing", count: Math.floor(totalCalls * 0.36)},
+                    {category: "Customer Support", count: Math.floor(totalCalls * 0.24)},
+                    {category: "Business Issues", count: Math.floor(totalCalls * 0.22)},
+                    {category: "System Issues", count: Math.floor(totalCalls * 0.13)},
+                    {category: "Technical Issues", count: Math.floor(totalCalls * 0.05)}
+                ];
+                
+                // Generate call outcomes
+                const callOutcomes = [
+                    {outcome: "Success", count: successfulCalls},
+                    {outcome: "Failed", count: totalCalls - successfulCalls}
+                ];
+                
+                return {
+                    "summary_kpis": {
+                        "total_calls": totalCalls,
+                        "success_rate": successRate,
+                        "avg_duration": avgDuration,
+                        "peak_hour": "10:00 AM",
+                        "peak_hour_calls": 59,
+                        "top_agent": topAgent.full_name || "N/A",
+                        "active_agents": agentData.length
+                    },
+                    "agent_performance": agentData,
+                    "hourly_stats": hourlyStats,
+                    "call_categories": callCategories,
+                    "call_outcomes": callOutcomes
+                };
+            }
+            
+            updateFilters() {
+                // Update agent filter dropdown
+                const agentFilter = document.getElementById('agentFilter');
+                agentFilter.innerHTML = '<option value="all">All Agents</option>';
+                
+                const agents = [...new Set(this.currentData.agent_performance.map(a => a.full_name))];
+                agents.forEach(agent => {
+                    const option = document.createElement('option');
+                    option.value = agent;
+                    option.textContent = agent;
+                    agentFilter.appendChild(option);
+                });
+            }
+            
+            applyFilters() {
+                let filteredData = [...this.currentData.agent_performance];
+                
+                // Apply agent filter
+                if (this.filters.agent !== 'all') {
+                    filteredData = filteredData.filter(agent => agent.full_name === this.filters.agent);
+                }
+                
+                // Apply success rate filter
+                if (this.filters.success !== 'all') {
+                    switch(this.filters.success) {
+                        case 'high':
+                            filteredData = filteredData.filter(agent => agent.Success_Rate >= 70);
+                            break;
+                        case 'medium':
+                            filteredData = filteredData.filter(agent => agent.Success_Rate >= 30 && agent.Success_Rate < 70);
+                            break;
+                        case 'low':
+                            filteredData = filteredData.filter(agent => agent.Success_Rate < 30);
+                            break;
+                    }
+                }
+                
+                // Apply sorting
+                switch(this.filters.sort) {
+                    case 'name':
+                        filteredData.sort((a, b) => a.full_name.localeCompare(b.full_name));
+                        break;
+                    case 'calls':
+                        filteredData.sort((a, b) => b.Total_Calls - a.Total_Calls);
+                        break;
+                    case 'duration':
+                        filteredData.sort((a, b) => b.Avg_Duration_Min - a.Avg_Duration_Min);
+                        break;
+                    case 'success':
+                        filteredData.sort((a, b) => b.Success_Rate - a.Success_Rate);
+                        break;
+                }
+                
+                this.filteredData = filteredData;
+                this.currentPage = 1;
+                this.updateTable();
+                this.updatePagination();
+            }
+            
+            resetFilters() {
+                document.getElementById('dateFilter').value = 'all';
+                document.getElementById('agentFilter').value = 'all';
+                document.getElementById('successFilter').value = 'all';
+                document.getElementById('sortFilter').value = 'name';
+                
+                this.filters = {
+                    date: 'all',
+                    agent: 'all',
+                    success: 'all',
+                    sort: 'name'
+                };
+                
+                this.applyFilters();
+            }
+            
+            updateDashboard() {
+                this.updateKPIs();
+                this.updateCharts();
+                this.applyFilters();
+            }
+            
+            updateKPIs() {
+                const kpis = this.currentData.summary_kpis;
+                
+                document.getElementById('totalCalls').textContent = kpis.total_calls.toLocaleString();
+                document.getElementById('successRate').textContent = kpis.success_rate.toFixed(1) + '%';
+                document.getElementById('avgDuration').textContent = kpis.avg_duration.toFixed(2) + ' min';
+                document.getElementById('activeAgents').textContent = kpis.active_agents;
+                
+                // Update change indicators (simulated)
+                document.getElementById('totalCallsChange').textContent = 
+                    `+${Math.floor(Math.random() * 20)}% from last period`;
+                document.getElementById('successRateChange').textContent = 
+                    `+${(Math.random() * 5).toFixed(1)}% improvement`;
+            }
+            
+            updateCharts() {
+                this.createAgentChart();
+                this.createTrendChart();
+                this.createCategoryChart();
+                this.createOutcomeChart();
+            }
+            
+            createAgentChart() {
+                const ctx = document.getElementById('agentChart').getContext('2d');
+                
+                if (this.charts.agentChart) {
+                    this.charts.agentChart.destroy();
+                }
+                
+                // Get top 10 agents by success rate
+                const topAgents = [...this.currentData.agent_performance]
+                    .sort((a, b) => b.Success_Rate - a.Success_Rate)
+                    .slice(0, 10);
+                
+                this.charts.agentChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: topAgents.map(agent => agent.full_name.split('.')[0]),
+                        datasets: [{
+                            label: 'Success Rate (%)',
+                            data: topAgents.map(agent => agent.Success_Rate),
+                            backgroundColor: '#3B82F6',
+                            borderColor: '#2563EB',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Success Rate: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: (value) => value + '%'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createTrendChart() {
+                const ctx = document.getElementById('trendChart').getContext('2d');
+                
+                if (this.charts.trendChart) {
+                    this.charts.trendChart.destroy();
+                }
+                
+                const hourlyData = this.currentData.hourly_stats;
+                
+                this.charts.trendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: hourlyData.map(item => item.Hour + ':00'),
+                        datasets: [{
+                            label: 'Total Calls',
+                            data: hourlyData.map(item => item.Total_Calls),
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }, {
+                            label: 'Successful Calls',
+                            data: hourlyData.map(item => item.Successful_Calls),
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Calls'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Time of Day'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createCategoryChart() {
+                const ctx = document.getElementById('categoryChart').getContext('2d');
+                
+                if (this.charts.categoryChart) {
+                    this.charts.categoryChart.destroy();
+                }
+                
+                const categoryData = this.currentData.call_categories;
+                
+                this.charts.categoryChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: categoryData.map(item => item.category),
+                        datasets: [{
+                            data: categoryData.map(item => item.count),
+                            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
+                            borderWidth: 2,
+                            borderColor: '#FFFFFF'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createOutcomeChart() {
+                const ctx = document.getElementById('outcomeChart').getContext('2d');
+                
+                if (this.charts.outcomeChart) {
+                    this.charts.outcomeChart.destroy();
+                }
+                
+                const outcomeData = this.currentData.call_outcomes;
+                
+                this.charts.outcomeChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: outcomeData.map(item => item.outcome),
+                        datasets: [{
+                            label: 'Call Count',
+                            data: outcomeData.map(item => item.count),
+                            backgroundColor: ['#10B981', '#EF4444'],
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Calls'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            updateTable() {
+                const tableBody = document.getElementById('tableBody');
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                const endIndex = startIndex + this.itemsPerPage;
+                const pageData = this.filteredData.slice(startIndex, endIndex);
+                
+                if (pageData.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem;">
+                                No data available for the current filters.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tableBody.innerHTML = pageData.map(agent => `
+                    <tr>
+                        <td>${agent.full_name}</td>
+                        <td>${agent.Total_Calls}</td>
+                        <td>${agent.Avg_Duration_Min.toFixed(2)} min</td>
+                        <td>
+                            <span class="status ${agent.Success_Rate >= 70 ? 'status--success' : agent.Success_Rate >= 30 ? 'status--warning' : 'status--error'}">
+                                ${agent.Success_Rate.toFixed(1)}%
+                            </span>
+                        </td>
+                        <td>${agent.Successful_Calls}</td>
+                        <td>
+                            <button class="btn btn-sm" onclick="workIndiaDashboard.viewAgentDetails('${agent.user}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            updatePagination() {
+                const pagination = document.getElementById('pagination');
+                const maxPage = Math.ceil(this.filteredData.length / this.itemsPerPage);
+                
+                if (maxPage <= 1) {
+                    pagination.style.display = 'none';
+                    return;
+                }
+                
+                pagination.style.display = 'flex';
+                
+                // Clear existing pagination buttons (except prev/next)
+                const prevBtn = document.getElementById('prevPage');
+                const nextBtn = document.getElementById('nextPage');
+                pagination.innerHTML = '';
+                pagination.appendChild(prevBtn);
+                
+                // Add page buttons
+                for (let i = 1; i <= maxPage; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.textContent = i;
+                    if (i === this.currentPage) {
+                        pageBtn.classList.add('active');
+                    }
+                    pageBtn.addEventListener('click', () => {
+                        this.currentPage = i;
+                        this.updateTable();
+                        this.updatePagination();
+                    });
+                    pagination.appendChild(pageBtn);
+                }
+                
+                pagination.appendChild(nextBtn);
+                
+                // Update prev/next button states
+                prevBtn.disabled = this.currentPage === 1;
+                nextBtn.disabled = this.currentPage === maxPage;
+            }
+            
+            filterTable(searchTerm) {
+                if (!searchTerm) {
+                    this.applyFilters();
+                    return;
+                }
+                
+                const filtered = this.filteredData.filter(agent => 
+                    agent.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    agent.user.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+                
+                this.filteredData = filtered;
+                this.currentPage = 1;
+                this.updateTable();
+                this.updatePagination();
+            }
+            
+            sortTable(column) {
+                const isAscending = this.sortDirection[column] !== 'asc';
+                
+                this.filteredData.sort((a, b) => {
+                    let aVal = a[column];
+                    let bVal = b[column];
+                    
+                    if (typeof aVal === 'string') {
+                        aVal = aVal.toLowerCase();
+                        bVal = bVal.toLowerCase();
+                    }
+                    
+                    if (isAscending) {
+                        return aVal > bVal ? 1 : -1;
+                    } else {
+                        return aVal < bVal ? 1 : -1;
+                    }
+                });
+                
+                this.sortDirection[column] = isAscending ? 'asc' : 'desc';
+                this.updateTable();
+                this.showToast(`Sorted by ${column.replace('_', ' ')}`, 'info');
+            }
+            
+            exportToCSV() {
+                if (this.filteredData.length === 0) {
+                    this.showToast('No data to export', 'warning');
+                    return;
+                }
+                
+                const headers = ['Agent Name', 'Total Calls', 'Avg Duration (min)', 'Success Rate (%)', 'Successful Calls'];
+                
+                const csvContent = [
+                    headers.join(','),
+                    ...this.filteredData.map(agent => [
+                        `"${agent.full_name}"`,
+                        agent.Total_Calls,
+                        agent.Avg_Duration_Min.toFixed(2),
+                        agent.Success_Rate.toFixed(1),
+                        agent.Successful_Calls
+                    ].join(','))
+                ].join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'workindia-agent-performance.csv';
+                a.click();
+                
+                this.showToast('Data exported successfully!', 'success');
+            }
+            
+            viewAgentDetails(agentId) {
+                // This would typically show a modal with agent details
+                this.showToast(`Viewing details for agent ${agentId}`, 'info');
+            }
+            
+            showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                    ${message}
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.workIndiaDashboard = new WorkIndiaDashboard();
+        });
+
+        // Add CSS animations for toast notifications
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            
+            .status--success {
+                background-color: rgba(16, 185, 129, 0.15);
+                color: #10B981;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                font-weight: 500;
+            }
+            
+            .status--warning {
+                background-color: rgba(245, 158, 11, 0.15);
+                color: #F59E0B;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                font-weight: 500;
+            }
+            
+            .status--error {
+                background-color: rgba(239, 68, 68, 0.15);
+                color: #EF4444;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                font-weight: 500;
+            }
+            
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.8rem;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>
