@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorkIndia Support Team Analytics Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">WI</div>
+                    <div class="title-section">
+                        <h1>WorkIndia Support Team Analytics Dashboard</h1>
+                        <p>Real-time support team performance analytics</p>
+                    </div>
+                </div>
+                <div class="header-info">
+                    <div class="date-time" id="currentDateTime"></div>
+                    <div class="status">
+                        <span class="status-dot"></span>
+                        Live Data
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- File Upload Section -->
+            <section class="upload-section">
+                <div class="upload-card">
+                    <h3>Upload New Data</h3>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📊</div>
+                        <div class="upload-text">
+                            <strong>Drag & drop Excel file here or click to browse</strong>
+                            <small>Supports .xlsx and .csv files</small>
+                        </div>
+                        <input type="file" id="fileInput" accept=".xlsx,.csv,.xls" hidden>
+                    </div>
+                    <div class="upload-progress" id="uploadProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <span id="progressText">Processing...</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KPI Cards -->
+            <section class="kpi-section">
+                <div class="kpi-card primary">
+                    <div class="kpi-icon">📞</div>
+                    <div class="kpi-content">
+                        <h3>Total Calls</h3>
+                        <div class="kpi-value" id="totalCalls">97</div>
+                        <div class="kpi-change positive">+12% from last period</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card success">
+                    <div class="kpi-icon">📈</div>
+                    <div class="kpi-content">
+                        <h3>Success Rate</h3>
+                        <div class="kpi-value" id="successRate">36.1%</div>
+                        <div class="kpi-change positive">+5.2% improvement</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card warning">
+                    <div class="kpi-icon">⏱️</div>
+                    <div class="kpi-content">
+                        <h3>Avg Duration</h3>
+                        <div class="kpi-value" id="avgDuration">4.55 min</div>
+                        <div class="kpi-change neutral">Optimal range</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card info">
+                    <div class="kpi-icon">🕙</div>
+                    <div class="kpi-content">
+                        <h3>Peak Hour</h3>
+                        <div class="kpi-value" id="peakHour">10:00 AM</div>
+                        <div class="kpi-change neutral" id="peakHourCalls">59 calls</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card primary">
+                    <div class="kpi-icon">⭐</div>
+                    <div class="kpi-content">
+                        <h3>Top Agent</h3>
+                        <div class="kpi-value" id="topAgent">Akhila S</div>
+                        <div class="kpi-change positive" id="topAgentRate">100% success</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card info">
+                    <div class="kpi-icon">👥</div>
+                    <div class="kpi-content">
+                        <h3>Active Agents</h3>
+                        <div class="kpi-value" id="activeAgents">14</div>
+                        <div class="kpi-change positive">All available</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Agent Performance</h3>
+                        <p>Success rate by agent (Top 10)</p>
+                    </div>
+                    <canvas id="agentChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Hourly Call Volume</h3>
+                        <p>Call distribution throughout the day</p>
+                    </div>
+                    <canvas id="hourlyChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Call Categories</h3>
+                        <p>Distribution by call type</p>
+                    </div>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Success vs Failed</h3>
+                        <p>Call outcome analysis</p>
+                    </div>
+                    <canvas id="outcomeChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Data Table -->
+            <section class="table-section">
+                <div class="table-header">
+                    <h3>Agent Performance Details</h3>
+                    <div class="table-controls">
+                        <input type="text" id="searchInput" placeholder="Search agents..." class="search-input">
+                        <button class="btn-secondary" id="exportBtn">Export CSV</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="agentTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('full_name')">Agent Name</th>
+                                <th onclick="sortTable('Total_Calls')">Total Calls</th>
+                                <th onclick="sortTable('Avg_Duration_Min')">Avg Duration</th>
+                                <th onclick="sortTable('Success_Rate')">Success Rate</th>
+                                <th onclick="sortTable('Successful_Calls')">Successful Calls</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>Built by <strong>Ayush Pandey</strong> ORM | <a href="https://workindia.in" target="_blank">WorkIndia</a></p>
+                <p>Last updated: <span id="lastUpdated"></span></p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
