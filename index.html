@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -645,6 +644,8 @@
         .toast.success { background: var(--success); }
         .toast.error { background: var(--danger); }
         .toast.warning { background: var(--warning); }
+        .toast.info { background: var(--secondary); }
+
 
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
@@ -714,11 +715,39 @@
             background: var(--card-bg);
             color: var(--text);
         }
+        
+        .status--success {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #10B981;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .status--warning {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: #F59E0B;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .status--error {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
     <div class="dashboard-container">
-        <!-- Header -->
         <header class="header">
             <div class="header-content">
                 <div class="logo-section">
@@ -743,9 +772,7 @@
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- File Upload Section -->
             <section class="upload-section">
                 <div class="upload-card">
                     <h3>Upload New Data</h3>
@@ -766,7 +793,6 @@
                 </div>
             </section>
 
-            <!-- Filter Section -->
             <section class="filter-section">
                 <div class="filter-header">
                     <div class="filter-title">Data Filters</div>
@@ -788,8 +814,7 @@
                         <label class="filter-label">Agent</label>
                         <select class="filter-select" id="agentFilter">
                             <option value="all">All Agents</option>
-                            <!-- Will be populated dynamically -->
-                        </select>
+                            </select>
                     </div>
                     <div class="filter-group">
                         <label class="filter-label">Success Rate</label>
@@ -812,7 +837,6 @@
                 </div>
             </section>
 
-            <!-- KPI Cards -->
             <section class="kpi-section">
                 <div class="kpi-card primary">
                     <div class="kpi-icon"><i class="fas fa-phone"></i></div>
@@ -851,7 +875,6 @@
                 </div>
             </section>
 
-            <!-- Charts Section -->
             <section class="charts-section">
                 <div class="chart-container">
                     <div class="chart-header">
@@ -886,7 +909,6 @@
                 </div>
             </section>
 
-            <!-- Data Table -->
             <section class="table-section">
                 <div class="table-header">
                     <h3>Agent Performance Details</h3>
@@ -912,7 +934,7 @@
                         <tbody id="tableBody">
                             <tr>
                                 <td colspan="6" style="text-align: center; padding: 2rem;">
-                                    <div class="spinner" id="tableSpinner"></div>
+                                    <div class="spinner" id="tableSpinner" style="display: none;"></div>
                                     <div id="noDataMessage">No data available. Upload a file to get started.</div>
                                 </td>
                             </tr>
@@ -927,7 +949,6 @@
             </section>
         </main>
 
-        <!-- Footer -->
         <footer class="footer">
             <div class="footer-content">
                 <p>Built by <strong>Ayush Pandey</strong> ORM | <a href="https://workindia.in" target="_blank">WorkIndia</a></p>
@@ -953,7 +974,6 @@
                     sort: 'name'
                 };
                 
-                // Initialize with empty data structure
                 this.defaultData = {
                     "summary_kpis": {
                         "total_calls": 0,
@@ -979,7 +999,6 @@
                 this.setupEventListeners();
                 this.updateDashboard();
                 
-                // Update time every minute
                 setInterval(() => this.updateDateTime(), 60000);
             }
             
@@ -1002,7 +1021,6 @@
             }
             
             setupEventListeners() {
-                // File upload functionality
                 const uploadArea = document.getElementById('uploadArea');
                 const fileInput = document.getElementById('fileInput');
                 
@@ -1032,21 +1050,19 @@
                     }
                 });
                 
-                // Search functionality
                 document.getElementById('searchInput').addEventListener('input', (e) => {
                     this.filterTable(e.target.value);
                 });
                 
-                // Export functionality
                 document.getElementById('exportBtn').addEventListener('click', () => {
                     this.exportToCSV();
                 });
                 
-                // Pagination
                 document.getElementById('prevPage').addEventListener('click', () => {
                     if (this.currentPage > 1) {
                         this.currentPage--;
                         this.updateTable();
+                        this.updatePagination();
                     }
                 });
                 
@@ -1055,15 +1071,14 @@
                     if (this.currentPage < maxPage) {
                         this.currentPage++;
                         this.updateTable();
+                        this.updatePagination();
                     }
                 });
                 
-                // Theme toggle
                 document.getElementById('themeToggle').addEventListener('click', () => {
                     this.toggleTheme();
                 });
                 
-                // Filter event listeners
                 document.getElementById('dateFilter').addEventListener('change', (e) => {
                     this.filters.date = e.target.value;
                     this.applyFilters();
@@ -1088,7 +1103,6 @@
                     this.resetFilters();
                 });
                 
-                // Table sorting
                 document.querySelectorAll('#agentTable th[data-sort]').forEach(th => {
                     th.addEventListener('click', () => {
                         this.sortTable(th.dataset.sort);
@@ -1125,20 +1139,24 @@
                 progressContainer.style.display = 'block';
                 progressFill.style.width = '0%';
                 progressText.textContent = 'Processing...';
-                
+
+                document.getElementById('tableSpinner').style.display = 'block';
+                document.getElementById('noDataMessage').style.display = 'none';
+
                 try {
-                    // Simulate processing with progress
-                    for (let i = 0; i <= 100; i += 10) {
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        progressFill.style.width = i + '%';
-                        
-                        if (i === 30) progressText.textContent = 'Reading file...';
-                        if (i === 60) progressText.textContent = 'Processing data...';
-                        if (i === 90) progressText.textContent = 'Updating charts...';
-                        if (i === 100) progressText.textContent = 'Complete!';
+                    const steps = [
+                        { text: 'Reading file...', progress: 30 },
+                        { text: 'Processing data...', progress: 60 },
+                        { text: 'Updating charts...', progress: 90 },
+                        { text: 'Complete!', progress: 100 }
+                    ];
+
+                    for (const step of steps) {
+                        progressText.textContent = step.text;
+                        progressFill.style.width = step.progress + '%';
+                        await new Promise(resolve => setTimeout(resolve, 300));
                     }
                     
-                    // Process the file
                     await this.processFile(file);
                     
                     setTimeout(() => {
@@ -1149,42 +1167,8 @@
                 } catch (error) {
                     console.error('Error processing file:', error);
                     progressContainer.style.display = 'none';
-                    this.showToast('Error processing file. Please try again.', 'error');
-                }
-            }
-            
-            async processFile(file) {
-                // Show loading state
-                document.getElementById('tableSpinner').style.display = 'block';
-                document.getElementById('noDataMessage').style.display = 'none';
-                
-                try {
-                    let agentData = [];
-                    
-                    if (file.name.endsWith('.csv')) {
-                        // Process CSV file
-                        agentData = await this.processCSV(file);
-                    } else {
-                        // Process Excel file
-                        agentData = await this.processExcel(file);
-                    }
-                    
-                    // Generate additional data based on agent performance
-                    this.currentData = this.generateDashboardData(agentData);
-                    
-                    // Update filters
-                    this.updateFilters();
-                    
-                    // Apply initial filters
-                    this.applyFilters();
-                    
-                    this.updateDashboard();
-                    
-                } catch (error) {
-                    console.error('Error processing file:', error);
                     this.showToast('Error processing file. Please check the format and try again.', 'error');
                 } finally {
-                    // Hide loading state
                     document.getElementById('tableSpinner').style.display = 'none';
                     if (this.currentData.agent_performance.length === 0) {
                         document.getElementById('noDataMessage').style.display = 'block';
@@ -1192,18 +1176,64 @@
                 }
             }
             
+            async processFile(file) {
+                try {
+                    let rawData = [];
+                    
+                    if (file.name.endsWith('.csv')) {
+                        rawData = await this.processCSV(file);
+                    } else {
+                        rawData = await this.processExcel(file);
+                    }
+                    
+                    this.currentData = this.processRawData(rawData);
+                    
+                    this.updateFilters();
+                    
+                    this.applyFilters();
+                    
+                    this.updateDashboard();
+                    
+                } catch (error) {
+                    throw error;
+                }
+            }
+            
             async processCSV(file) {
                 return new Promise((resolve, reject) => {
-                    Papa.parse(file, {
-                        header: true,
-                        dynamicTyping: true,
-                        complete: (results) => {
-                            resolve(results.data);
-                        },
-                        error: (error) => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = (e) => {
+                        try {
+                            const text = e.target.result;
+                            const lines = text.split('\n');
+                            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                            
+                            const data = [];
+                            for (let i = 1; i < lines.length; i++) {
+                                if (!lines[i].trim()) continue;
+                                
+                                const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+                                const entry = {};
+                                
+                                headers.forEach((header, index) => {
+                                    entry[header] = values[index] || '';
+                                });
+                                
+                                data.push(entry);
+                            }
+                            
+                            resolve(data);
+                        } catch (error) {
                             reject(error);
                         }
-                    });
+                    };
+                    
+                    reader.onerror = (error) => {
+                        reject(error);
+                    };
+                    
+                    reader.readAsText(file);
                 });
             }
             
@@ -1216,7 +1246,6 @@
                             const data = new Uint8Array(e.target.result);
                             const workbook = XLSX.read(data, { type: 'array' });
                             
-                            // Get the first worksheet
                             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                             const jsonData = XLSX.utils.sheet_to_json(worksheet);
                             
@@ -1234,42 +1263,88 @@
                 });
             }
             
-            generateDashboardData(agentData) {
-                // Calculate summary KPIs
-                const totalCalls = agentData.reduce((sum, agent) => sum + (agent.Total_Calls || 0), 0);
-                const successfulCalls = agentData.reduce((sum, agent) => sum + (agent.Successful_Calls || 0), 0);
-                const successRate = totalCalls > 0 ? (successfulCalls / totalCalls) * 100 : 0;
-                const avgDuration = agentData.reduce((sum, agent) => sum + (agent.Avg_Duration_Min || 0), 0) / agentData.length;
-                
-                // Find top agent
-                const topAgent = agentData.reduce((max, agent) => 
-                    (agent.Success_Rate > max.Success_Rate) ? agent : max, {Success_Rate: 0});
-                
-                // Generate hourly stats (simulated)
-                const hourlyStats = [];
-                for (let i = 7; i <= 18; i++) {
-                    hourlyStats.push({
-                        Hour: i,
-                        Total_Calls: Math.floor(Math.random() * 20) + 10,
-                        Avg_Duration_Min: (Math.random() * 5) + 2,
-                        Successful_Calls: Math.floor(Math.random() * 15) + 5,
-                        Success_Rate: Math.floor(Math.random() * 40) + 30
-                    });
+            processRawData(rawData) {
+                if (rawData.length === 0) {
+                    return this.defaultData;
                 }
                 
-                // Generate call categories (simulated)
-                const callCategories = [
-                    {category: "Product Briefing", count: Math.floor(totalCalls * 0.36)},
-                    {category: "Customer Support", count: Math.floor(totalCalls * 0.24)},
-                    {category: "Business Issues", count: Math.floor(totalCalls * 0.22)},
-                    {category: "System Issues", count: Math.floor(totalCalls * 0.13)},
-                    {category: "Technical Issues", count: Math.floor(totalCalls * 0.05)}
-                ];
+                const agentMap = new Map();
+                const successfulStatuses = ['PB', 'CC', 'SI', 'VI', 'EAR'];
+                const hourlyCounts = {};
+                const statusCounts = {};
+
+                rawData.forEach(entry => {
+                    const user = entry.user || 'Unknown';
+                    const fullName = entry.full_name || 'Unknown Agent';
+                    const status = entry.status || '';
+                    const statusName = entry.status_name || 'Unknown';
+                    const duration = parseFloat(entry.length_in_sec) || 0;
+                    const hour = entry.Hour ? parseInt(entry.Hour) : null;
+                    
+                    if (!agentMap.has(user)) {
+                        agentMap.set(user, {
+                            user: user,
+                            full_name: fullName,
+                            Total_Calls: 0,
+                            Successful_Calls: 0,
+                            Total_Duration_Sec: 0,
+                        });
+                    }
+                    
+                    const agent = agentMap.get(user);
+                    agent.Total_Calls++;
+                    agent.Total_Duration_Sec += duration;
+                    
+                    if (successfulStatuses.includes(status)) {
+                        agent.Successful_Calls++;
+                    }
+
+                    if (hour !== null) {
+                        hourlyCounts[hour] = (hourlyCounts[hour] || 0) + 1;
+                    }
+                    
+                    statusCounts[statusName] = (statusCounts[statusName] || 0) + 1;
+                });
                 
-                // Generate call outcomes
+                const agentPerformance = Array.from(agentMap.values()).map(agent => {
+                    const successRate = agent.Total_Calls > 0 ? 
+                        (agent.Successful_Calls / agent.Total_Calls) * 100 : 0;
+                    const avgDurationMin = agent.Total_Calls > 0 ? 
+                        (agent.Total_Duration_Sec / agent.Total_Calls) / 60 : 0;
+                    
+                    return {
+                        user: agent.user,
+                        full_name: agent.full_name,
+                        Total_Calls: agent.Total_Calls,
+                        Successful_Calls: agent.Successful_Calls,
+                        Success_Rate: successRate,
+                        Avg_Duration_Min: avgDurationMin,
+                    };
+                });
+                
+                const totalCalls = rawData.length;
+                const successfulCalls = agentPerformance.reduce((sum, agent) => sum + agent.Successful_Calls, 0);
+                const successRate = totalCalls > 0 ? (successfulCalls / totalCalls) * 100 : 0;
+                const totalDuration = agentPerformance.reduce((sum, agent) => sum + (agent.Avg_Duration_Min * agent.Total_Calls), 0);
+                const avgDuration = totalCalls > 0 ? totalDuration / totalCalls : 0;
+                
+                const topAgent = agentPerformance.reduce((max, agent) => 
+                    (agent.Success_Rate > max.Success_Rate) ? agent : max, { Success_Rate: 0 });
+
+                const hourlyStats = Object.keys(hourlyCounts).map(hour => ({
+                    Hour: parseInt(hour),
+                    Total_Calls: hourlyCounts[hour]
+                })).sort((a,b) => a.Hour - b.Hour);
+                
+                const callCategories = Object.keys(statusCounts).map(category => ({
+                    category: category,
+                    count: statusCounts[category],
+                    percentage: (statusCounts[category] / totalCalls) * 100
+                }));
+                
                 const callOutcomes = [
-                    {outcome: "Success", count: successfulCalls},
-                    {outcome: "Failed", count: totalCalls - successfulCalls}
+                    { outcome: "Success", count: successfulCalls },
+                    { outcome: "Failed", count: totalCalls - successfulCalls }
                 ];
                 
                 return {
@@ -1277,12 +1352,12 @@
                         "total_calls": totalCalls,
                         "success_rate": successRate,
                         "avg_duration": avgDuration,
-                        "peak_hour": "10:00 AM",
-                        "peak_hour_calls": 59,
+                        "peak_hour": "N/A",
+                        "peak_hour_calls": 0,
                         "top_agent": topAgent.full_name || "N/A",
-                        "active_agents": agentData.length
+                        "active_agents": agentPerformance.length
                     },
-                    "agent_performance": agentData,
+                    "agent_performance": agentPerformance,
                     "hourly_stats": hourlyStats,
                     "call_categories": callCategories,
                     "call_outcomes": callOutcomes
@@ -1290,7 +1365,6 @@
             }
             
             updateFilters() {
-                // Update agent filter dropdown
                 const agentFilter = document.getElementById('agentFilter');
                 agentFilter.innerHTML = '<option value="all">All Agents</option>';
                 
@@ -1306,12 +1380,10 @@
             applyFilters() {
                 let filteredData = [...this.currentData.agent_performance];
                 
-                // Apply agent filter
                 if (this.filters.agent !== 'all') {
                     filteredData = filteredData.filter(agent => agent.full_name === this.filters.agent);
                 }
                 
-                // Apply success rate filter
                 if (this.filters.success !== 'all') {
                     switch(this.filters.success) {
                         case 'high':
@@ -1326,7 +1398,6 @@
                     }
                 }
                 
-                // Apply sorting
                 switch(this.filters.sort) {
                     case 'name':
                         filteredData.sort((a, b) => a.full_name.localeCompare(b.full_name));
@@ -1378,7 +1449,6 @@
                 document.getElementById('avgDuration').textContent = kpis.avg_duration.toFixed(2) + ' min';
                 document.getElementById('activeAgents').textContent = kpis.active_agents;
                 
-                // Update change indicators (simulated)
                 document.getElementById('totalCallsChange').textContent = 
                     `+${Math.floor(Math.random() * 20)}% from last period`;
                 document.getElementById('successRateChange').textContent = 
@@ -1399,7 +1469,6 @@
                     this.charts.agentChart.destroy();
                 }
                 
-                // Get top 10 agents by success rate
                 const topAgents = [...this.currentData.agent_performance]
                     .sort((a, b) => b.Success_Rate - a.Success_Rate)
                     .slice(0, 10);
@@ -1407,7 +1476,7 @@
                 this.charts.agentChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: topAgents.map(agent => agent.full_name.split('.')[0]),
+                        labels: topAgents.map(agent => agent.full_name.split(' ')[0]),
                         datasets: [{
                             label: 'Success Rate (%)',
                             data: topAgents.map(agent => agent.Success_Rate),
@@ -1425,7 +1494,7 @@
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        return `Success Rate: ${context.raw}%`;
+                                        return `Success Rate: ${context.raw.toFixed(1)}%`;
                                     }
                                 }
                             }
@@ -1455,19 +1524,12 @@
                 this.charts.trendChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: hourlyData.map(item => item.Hour + ':00'),
+                        labels: hourlyData.map(item => `${item.Hour}:00`),
                         datasets: [{
                             label: 'Total Calls',
                             data: hourlyData.map(item => item.Total_Calls),
                             borderColor: '#3B82F6',
                             backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }, {
-                            label: 'Successful Calls',
-                            data: hourlyData.map(item => item.Successful_Calls),
-                            borderColor: '#10B981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
                             fill: true,
                             tension: 0.4
                         }]
@@ -1618,13 +1680,20 @@
                 
                 pagination.style.display = 'flex';
                 
-                // Clear existing pagination buttons (except prev/next)
-                const prevBtn = document.getElementById('prevPage');
-                const nextBtn = document.getElementById('nextPage');
                 pagination.innerHTML = '';
+                
+                const prevBtn = document.createElement('button');
+                prevBtn.id = 'prevPage';
+                prevBtn.textContent = '« Previous';
+                prevBtn.addEventListener('click', () => {
+                    if (this.currentPage > 1) {
+                        this.currentPage--;
+                        this.updateTable();
+                        this.updatePagination();
+                    }
+                });
                 pagination.appendChild(prevBtn);
                 
-                // Add page buttons
                 for (let i = 1; i <= maxPage; i++) {
                     const pageBtn = document.createElement('button');
                     pageBtn.textContent = i;
@@ -1639,9 +1708,19 @@
                     pagination.appendChild(pageBtn);
                 }
                 
+                const nextBtn = document.createElement('button');
+                nextBtn.id = 'nextPage';
+                nextBtn.textContent = 'Next »';
+                nextBtn.addEventListener('click', () => {
+                    const maxPage = Math.ceil(this.filteredData.length / this.itemsPerPage);
+                    if (this.currentPage < maxPage) {
+                        this.currentPage++;
+                        this.updateTable();
+                        this.updatePagination();
+                    }
+                });
                 pagination.appendChild(nextBtn);
                 
-                // Update prev/next button states
                 prevBtn.disabled = this.currentPage === 1;
                 nextBtn.disabled = this.currentPage === maxPage;
             }
@@ -1652,7 +1731,7 @@
                     return;
                 }
                 
-                const filtered = this.filteredData.filter(agent => 
+                let filtered = this.currentData.agent_performance.filter(agent => 
                     agent.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     agent.user.toLowerCase().includes(searchTerm.toLowerCase())
                 );
@@ -1717,7 +1796,6 @@
             }
             
             viewAgentDetails(agentId) {
-                // This would typically show a modal with agent details
                 this.showToast(`Viewing details for agent ${agentId}`, 'info');
             }
             
@@ -1737,49 +1815,9 @@
             }
         }
 
-        // Initialize dashboard when page loads
         document.addEventListener('DOMContentLoaded', () => {
             window.workIndiaDashboard = new WorkIndiaDashboard();
         });
-
-        // Add CSS animations for toast notifications
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideOut {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
-            }
-            
-            .status--success {
-                background-color: rgba(16, 185, 129, 0.15);
-                color: #10B981;
-                padding: 0.25rem 0.5rem;
-                border-radius: 4px;
-                font-weight: 500;
-            }
-            
-            .status--warning {
-                background-color: rgba(245, 158, 11, 0.15);
-                color: #F59E0B;
-                padding: 0.25rem 0.5rem;
-                border-radius: 4px;
-                font-weight: 500;
-            }
-            
-            .status--error {
-                background-color: rgba(239, 68, 68, 0.15);
-                color: #EF4444;
-                padding: 0.25rem 0.5rem;
-                border-radius: 4px;
-                font-weight: 500;
-            }
-            
-            .btn-sm {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.8rem;
-            }
-        `;
-        document.head.appendChild(style);
     </script>
 </body>
 </html>
